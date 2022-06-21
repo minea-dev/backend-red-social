@@ -1,0 +1,58 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: mariadb
+    container_name: ${NOMBRE_PROYECTO}-mariadb
+    restart: "no"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+    ports:
+      - ${MARIADB_PORT}:3306
+    volumes:
+      - ./db:/var/lib/mysql
+
+
+  adminer:
+    image: adminer
+    container_name: ${NOMBRE_PROYECTO}-adminer
+    restart: "no"
+    ports:
+      - ${ADMINER_PORT}:8080
+    links:
+      - db
+
+  php:
+    build:
+      context: ./docker/php
+      args:
+        php_version: 8.1-apache
+    container_name: ${NOMBRE_PROYECTO}-php
+    restart: "no"
+    environment:
+      MARIADB_HOST: ${NOMBRE_PROYECTO}-mariadb
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+    ports:
+      - ${PHP_PORT}:80
+    links:
+      - db
+    volumes:
+      - ./www:/var/www/html
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: ${MARIADB_DATABASE}-mailhog
+    ports:
+      - 8025:8025
+    expose:
+      - 1025
+
+volumes:
+  db:
+    external: true
